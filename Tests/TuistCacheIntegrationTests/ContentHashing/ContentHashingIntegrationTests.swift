@@ -1,12 +1,12 @@
 import Basic
 import Foundation
-import TuistCore
 import TuistCoreTesting
 import TuistSupport
 import XCTest
 
 @testable import TuistCache
 @testable import TuistSupportTesting
+@testable import TuistCore
 
 final class ContentHashingIntegrationTests: TuistTestCase {
     var subject: GraphContentHasher!
@@ -27,7 +27,7 @@ final class ContentHashingIntegrationTests: TuistTestCase {
     override func setUp() {
         super.setUp()
         cache = GraphLoaderCache()
-        graph = Graph.test(cache: cache)
+        graph = Graph.test()
         do {
             let temporaryDirectoryPath = try temporaryPath()
             source1 = try createTemporarySourceFile(on: temporaryDirectoryPath, name: "1", content: "1")
