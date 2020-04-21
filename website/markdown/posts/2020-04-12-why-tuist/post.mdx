@@ -72,7 +72,74 @@ let project = Project.featureFramework(name: "Seach")
 
 > Note how idiomatic and concise the definition of projects is ― your project is defined in one line.
 
+## Codify conventions around your architecture
+
+
+
 ## Dependencies
+
+If there's something that bothered me when using Xcode daily,
+was how hard it becomes to **maintain a dependency graph**.
+At some point, 
+you extract some logic into a transitive framework,
+and after following a very manual process, 
+other projects fail to compile.
+You probably forgot to embed that framework into some products that have it as a transitive dependency.
+
+I've talked to developers that think that it's developers' fault that don't know how to do things in Xcode.
+I'd conter-argue that when the dependency graph is large,
+**there's so much they need to know to do things right**,
+that the process becomes not just very manual,
+but error-prone.
+Having this mindset often leads to a terrible bus factor.
+There's a person in the team that did the initial work of creating projects and frameworks,
+and what's often considered *"the person that knows Xcode well".*
+
+In Tuist,
+we tasked ourselves with simplifying that until the point that **anyone could add/remove dependencies easily**.
+We imagined how we'd like the user interface to be, and we built the rest from there:
+
+```swift
+public enum TargetDependency: Codable, Equatable {
+  case target(name: String)
+  case project(target: String, path: Path)
+  case framework(path: Path)
+  case library(path: Path, publicHeaders: Path, swiftModuleMap: Path?)
+  case package(product: String)
+  case sdk(name: String, status: SDKStatus)
+  case cocoapods(path: Path)
+  case xcFramework(path: Path)
+}
+```
+
+When people compare Tuist to YAML-based project generators,
+the **beauty of the dependencies API** pops in my mind.
+My answer is always that it really depends on you want for your projects.
+If you want to move away from `.pbxproj` files,
+and describe things in simpler YAML files using same Xcode's concepts and ideas,
+YAML-based project generation is your friend.
+However, if you want to take it further,
+and use an interface that conceptually compresses all Xcode complexities so that your developers don't have to deal with them,
+Tuist is more suitable.
+Our principle is that **simplicity and consistency are key to scale up projects**.
+
+Some well-known companies that adopted a YAML-approach for generation of projects ended up building a tool on top of it.
+While that's something large companies can do,
+you might not want to find yourself in the situation where you need to build a tool yourself.
+Moreover, 
+having tools on top of other tools adds indirections, 
+which in fact,
+complicates optimization and debugging.
+
+## Failing early
+
+Xcode delegates catching errors to its build system. The problem with that is that there are certain errors that the build system doesn’t know how to misconfigurations in the project. For example, if there’s a circular dependency, the compilation will fail with an error along the lines of: “X not found”. What would you think as a developer? Is it not found because I didn’t configure the right search paths? Should I change the order in which targets are compiled in my scheme? The last thing you’d probably think is that there’s a circular dependency.
+
+To prevent that, Tuist tries to catch errors as early as possible. We know developers’ time is very valuable, and we think they should not spend it debugging Xcode errors that are not related to their code changes. We can’t catch everything, but we do our best. Especially around the dependency graph.
+
+Thanks to it, any developer can add a new framework or library to the dependency graph with the confidence that if they are doing something wrong, Tuist will catch it. Isn’t that great? Let me repeat that again: **anyone can modify the graph with confidence**. I can’t stress enough how great that is to grow your projects. If I make something wrong I know that `tuist generate` will tell me.
+
+If Tuist was a startup, we’d pitch this as democratizing scaling up projects, but we’ll keep it in plain terms.
 
 ## And more yet to come...
 
